@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
 
-export const Navbar = () => {
+export function NavBar() {
   return (
     <nav className="w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-50">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -35,4 +35,4 @@ export const Navbar = () => {
       </div>
     </nav>
   );
-};
+}

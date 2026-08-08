@@ -1,10 +1,10 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
-  NavigationMenuList,
   NavigationMenuItem,
+  NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import { Button } from "@/components/ui/button";
 
 export function NavBar() {
   return (
@@ -15,7 +15,7 @@ export function NavBar() {
             href="/"
             className="font-bold text-xl tracking-tight text-gray-900"
           >
-            WikiCenter
+            Wikimasters
           </Link>
         </div>
         <NavigationMenu>

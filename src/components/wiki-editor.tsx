@@ -52,7 +52,8 @@ export default function WikiEditor({
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object
+      .keys(newErrors).length === 0;
   };
 
   // Handle file upload

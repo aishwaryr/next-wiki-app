@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { UserButton } from "@hexclave/next";
+import { AuthButtons } from "./auth-buttons";
+import { hexclaveServerApp } from "@/hexclave/server";
+
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -6,7 +10,8 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 
-export function NavBar() {
+export async function NavBar() {
+  const user = await hexclaveServerApp.getUser();
   return (
     <nav className="w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-50">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -20,16 +25,13 @@ export function NavBar() {
         </div>
         <NavigationMenu>
           <NavigationMenuList className="flex items-center gap-2">
-            <NavigationMenuItem>
-              <Button asChild variant="outline">
-                <Link href="/signin">Sign In</Link>
-              </Button>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Button asChild>
-                <Link href="/signup">Sign Up</Link>
-              </Button>
-            </NavigationMenuItem>
+            {user ? (
+              <NavigationMenuItem>
+                <UserButton></UserButton>
+              </NavigationMenuItem>
+            ) : (
+              <AuthButtons />
+            )}
           </NavigationMenuList>
         </NavigationMenu>
       </div>

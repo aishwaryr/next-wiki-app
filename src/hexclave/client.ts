@@ -6,5 +6,6 @@ export const hexclaveClientApp = new HexclaveClientApp({
     default: {
       type: "hosted",
     },
+    home: "/",
   },
 });

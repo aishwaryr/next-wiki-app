@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { HexclaveProvider, HexclaveTheme } from "@hexclave/next";
+import { hexclaveServerApp } from "@/hexclave/server";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { NavBar } from "@/components/nav/nav-bar";
@@ -28,8 +30,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NavBar />
-        {children}
+        <HexclaveProvider app={hexclaveServerApp}>
+          <HexclaveTheme>
+            <NavBar />
+            {children}
+          </HexclaveTheme>
+        </HexclaveProvider>
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { hexclaveServerApp } from "@/hexclave/server";
 
 export type CreateArticleInput = {
   title: string;
@@ -16,18 +17,35 @@ export type UpdateArticleInput = {
 };
 
 export async function createArticle(data: CreateArticleInput) {
+  const user = await hexclaveServerApp.getUser();
+  if (!user) {
+    throw new Error("❌ Unauthorised");
+  }
+
   // TODO: Replace with actual database call
   console.log("✨ createArticle called:", data);
   return { success: true, message: "Article create logged (stub)" };
 }
 
 export async function updateArticle(id: string, data: UpdateArticleInput) {
+  const user = await hexclaveServerApp.getUser();
+  if (!user) {
+    throw new Error("❌ Unauthorised");
+  }
+
+  const authorId = user.id;
+
   // TODO: Replace with actual database update
-  console.log("📝 updateArticle called:", { id, ...data });
+  console.log("📝 updateArticle called:", authorId, data);
   return { success: true, message: `Article ${id} update logged (stub)` };
 }
 
 export async function deleteArticle(id: string) {
+  const user = await hexclaveServerApp.getUser();
+  if (!user) {
+    throw new Error("❌ Unauthorised");
+  }
+
   // TODO: Replace with actual database delete
   console.log("🗑️ deleteArticle called:", id);
   return { success: true, message: `Article ${id} delete logged (stub)` };

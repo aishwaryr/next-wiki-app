@@ -1,19 +1,22 @@
 "use client";
 
 import { Calendar, ChevronRight, Edit, Home, Trash, User } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { deleteArticleForm } from "@/app/actions/articles";
+
+import { deleteArticle } from "@/app/actions/articles";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface ViewerArticle {
-  title: string;
-  author: string | null;
   id: number;
+  title: string;
   content: string;
+  author: string | null;
   createdAt: string;
   imageUrl?: string | null;
 }
@@ -21,16 +24,19 @@ interface ViewerArticle {
 interface WikiArticleViewerProps {
   article: ViewerArticle;
   canEdit?: boolean;
-  pageviews?: number | null;
 }
 
 export default function WikiArticleViewer({
   article,
   canEdit = false,
 }: WikiArticleViewerProps) {
-  // Format date for display
+  const router = useRouter();
+
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+
     return date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -38,174 +44,155 @@ export default function WikiArticleViewer({
     });
   };
 
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this article?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      await deleteArticle(String(article.id));
+
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to delete article:", error);
+      alert("Failed to delete article");
+      setIsDeleting(false);
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Breadcrumb Navigation */}
-      <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
-        <Link
-          href="/"
-          className="flex items-center hover:text-foreground transition-colors"
-        >
-          <Home className="h-4 w-4 mr-1" />
+    <div className="container mx-auto max-w-4xl px-4 py-8">
+      <nav className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+        <Link href="/" className="flex items-center hover:text-foreground">
+          <Home className="mr-1 h-4 w-4" />
           Home
         </Link>
+
         <ChevronRight className="h-4 w-4" />
-        <span className="text-foreground font-medium">{article.title}</span>
+
+        <span className="font-medium text-foreground">{article.title}</span>
       </nav>
 
-      {/* Article Header */}
-      <div className="flex justify-between items-start mb-6">
-        <div className="flex-1">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            {article.title}
-          </h1>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="mb-4 text-4xl font-bold">{article.title}</h1>
 
-          {/* Article Metadata */}
           <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center">
-              <User className="h-4 w-4 mr-1" />
+              <User className="mr-1 h-4 w-4" />
+
               <span>By {article.author ?? "Unknown"}</span>
             </div>
+
             <div className="flex items-center">
-              <Calendar className="h-4 w-4 mr-1" />
+              <Calendar className="mr-1 h-4 w-4" />
+
               <span>{formatDate(article.createdAt)}</span>
             </div>
-            <div className="flex items-center">
-              <Badge variant="secondary">Article</Badge>
-            </div>
+
+            <Badge variant="secondary">Article</Badge>
           </div>
         </div>
 
-        {/* Edit Button - Only shown if user has edit permissions */}
         {canEdit && (
-          <div className="ml-4 flex items-center gap-2">
-            <Link href={`/wiki/edit/${article.id}`} className="cursor-pointer">
-              <Button variant="outline" className="cursor-pointer">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Article
-              </Button>
-            </Link>
+          <div className="ml-4 flex gap-2">
+            <Button asChild variant="outline">
+              <Link href={`/wiki/edit/${article.id}`}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
 
-            {/* Delete form calls the server action wrapper */}
-            <form action={deleteArticleForm}>
-              <input type="hidden" name="id" value={String(article.id)} />
-              <Button
-                type="submit"
-                variant="destructive"
-                className="ml-2 cursor-pointer"
-              >
-                <Trash className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </form>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              <Trash className="mr-2 h-4 w-4" />
+
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
           </div>
         )}
       </div>
 
-      {/* Article Content */}
       <Card>
         <CardContent className="pt-6">
-          {/* Article Image - Display if exists */}
-          {article.imageUrl && (
-            <div className="mb-8">
-              <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden">
-                <Image
-                  src={article.imageUrl}
-                  alt={`Image for ${article.title}`}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Rendered Markdown Content */}
-          <div className="prose prose-stone dark:prose-invert max-w-none">
+          <div className="prose prose-stone max-w-none dark:prose-invert">
             <ReactMarkdown
               components={{
-                // Customize heading styles
                 h1: ({ children }) => (
-                  <h1 className="text-3xl font-bold mt-8 mb-4 text-foreground">
-                    {children}
-                  </h1>
+                  <h1 className="mb-4 mt-8 text-3xl font-bold">{children}</h1>
                 ),
+
                 h2: ({ children }) => (
-                  <h2 className="text-2xl font-semibold mt-6 mb-3 text-foreground">
+                  <h2 className="mb-3 mt-6 text-2xl font-semibold">
                     {children}
                   </h2>
                 ),
+
                 h3: ({ children }) => (
-                  <h3 className="text-xl font-semibold mt-4 mb-2 text-foreground">
+                  <h3 className="mb-2 mt-4 text-xl font-semibold">
                     {children}
                   </h3>
                 ),
-                // Customize paragraph styles
+
                 p: ({ children }) => (
-                  <p className="mb-4 text-foreground leading-7">{children}</p>
+                  <p className="mb-4 leading-7">{children}</p>
                 ),
-                // Customize list styles
+
                 ul: ({ children }) => (
-                  <ul className="mb-4 ml-6 list-disc text-foreground">
-                    {children}
-                  </ul>
+                  <ul className="mb-4 ml-6 list-disc">{children}</ul>
                 ),
+
                 ol: ({ children }) => (
-                  <ol className="mb-4 ml-6 list-decimal text-foreground">
-                    {children}
-                  </ol>
+                  <ol className="mb-4 ml-6 list-decimal">{children}</ol>
                 ),
-                li: ({ children }) => (
-                  <li className="mb-1 text-foreground">{children}</li>
-                ),
-                // Customize code styles
+
+                li: ({ children }) => <li className="mb-1">{children}</li>,
+
                 code: ({ children, className }) => {
-                  const isInline = !className;
-                  return isInline ? (
-                    <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-foreground">
+                  const isBlock = Boolean(className);
+
+                  if (isBlock) {
+                    return <code className={className}>{children}</code>;
+                  }
+
+                  return (
+                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm">
                       {children}
                     </code>
-                  ) : (
-                    <code className={className}>{children}</code>
                   );
                 },
+
                 pre: ({ children }) => (
-                  <pre className="bg-muted p-4 rounded-lg overflow-x-auto mb-4 text-sm">
+                  <pre className="mb-4 overflow-x-auto rounded-lg bg-muted p-4 text-sm">
                     {children}
                   </pre>
                 ),
-                // Customize blockquote styles
+
                 blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-muted-foreground pl-4 italic my-4 text-muted-foreground">
+                  <blockquote className="my-4 border-l-4 pl-4 italic text-muted-foreground">
                     {children}
                   </blockquote>
                 ),
-                // Customize link styles
+
                 a: ({ children, href }) => (
                   <a
                     href={href}
-                    className="text-primary hover:underline font-medium"
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="font-medium text-primary hover:underline"
                   >
                     {children}
                   </a>
-                ),
-                // Customize table styles
-                table: ({ children }) => (
-                  <div className="overflow-x-auto mb-4">
-                    <table className="min-w-full border-collapse border border-border">
-                      {children}
-                    </table>
-                  </div>
-                ),
-                th: ({ children }) => (
-                  <th className="border border-border bg-muted px-4 py-2 text-left font-semibold">
-                    {children}
-                  </th>
-                ),
-                td: ({ children }) => (
-                  <td className="border border-border px-4 py-2">{children}</td>
                 ),
               }}
             >
@@ -215,34 +202,10 @@ export default function WikiArticleViewer({
         </CardContent>
       </Card>
 
-      {/* Footer Actions */}
-      <div className="mt-8 flex justify-between items-center">
-        <Link href="/">
-          <Button variant="outline">← Back to Articles</Button>
-        </Link>
-
-        {canEdit && (
-          <div className="flex items-center gap-2">
-            <Link href={`/wiki/edit/${article.id}`} className="cursor-pointer">
-              <Button className="cursor-pointer">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit This Article
-              </Button>
-            </Link>
-
-            <form action={deleteArticleForm}>
-              <input type="hidden" name="id" value={String(article.id)} />
-              <Button
-                type="submit"
-                variant="destructive"
-                className="cursor-pointer"
-              >
-                <Trash className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </form>
-          </div>
-        )}
+      <div className="mt-8">
+        <Button asChild variant="outline">
+          <Link href="/">← Back to Articles</Link>
+        </Button>
       </div>
     </div>
   );
